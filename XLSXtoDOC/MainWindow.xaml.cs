@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,12 +22,14 @@ namespace XLSXtoDOC
     /// </summary>
     public partial class MainWindow : Window
     {
+        public string result = "";
+
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void buttonLoad_Click(object sender, RoutedEventArgs e)
+        private void ButtonLoad_Click(object sender, RoutedEventArgs e)
         {
             Program program = new Program();
 
@@ -36,18 +39,37 @@ namespace XLSXtoDOC
                 CheckFileExists = true
             };
 
-            if (dlg.ShowDialog() == true)
+            if (dlg.ShowDialog() == true && dlg.FileName != null)
             {
-                if (program.LoadXLSX(dlg.FileName).Length > 0)
+                program.LoadXLSX(dlg.FileName, ref result);
+
+                if (result.Length > 0)
                 {
-                    textBoxLoadedFile.Text = program.LoadXLSX(dlg.FileName);
+                    textBlockSelectedFile.Text = dlg.FileName;
                 }
             }
         }
 
-        private void buttonSave_Click(object sender, RoutedEventArgs e)
+        private void ButtonSave_Click(object sender, RoutedEventArgs e)
         {
+            Program program = new Program();
 
+            SaveFileDialog dlg = new SaveFileDialog
+            {
+                Filter = "Word document (*.doc)|*.doc",
+                CheckFileExists = false,
+                CheckPathExists = true,
+                FileName = "result.doc"
+            };
+
+            if (result.Length < 1)
+            {
+                program.Error("Файл не выбран или не содержит символов");
+            }
+            else if (dlg.ShowDialog() == true && dlg.FileName != null)
+            {
+                program.SaveDOC(dlg.FileName, result);
+            }
         }
     }
 }
