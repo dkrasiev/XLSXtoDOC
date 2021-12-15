@@ -11,16 +11,16 @@ using System.IO;
 
 namespace XLSXtoDOC
 {
-    class Program
+    static class Program
     {
         /// <summary>
         /// Получение данных из excel
         /// </summary>
         /// <param name="filename"></param>
         /// <param name="result"></param>
-        public void LoadXLSX(string filename, ref string result)
+        public static string[,] LoadXLSX(string filename)
         {
-            result = "";
+            string[,] result = null;
 
             string FileName = filename;
             object rOnly = true;
@@ -42,43 +42,35 @@ namespace XLSXtoDOC
                 foreach (Excel.Worksheet worksheet in sheets)
                 {
                     // Получаем диапазон используемых на странице ячеек
-                    Excel.Range UsedRange = worksheet.UsedRange;
+                    Excel.Range usedRange = worksheet.UsedRange;
                     // Получаем строки в используемом диапазоне
-                    Excel.Range urRows = UsedRange.Rows;
+                    Excel.Range urRows = usedRange.Rows;
                     // Получаем столбцы в используемом диапазоне
-                    Excel.Range urColums = UsedRange.Columns;
+                    Excel.Range urColums = usedRange.Columns;
 
                     // Количества строк и столбцов
-                    int RowsCount = urRows.Count;
-                    int ColumnsCount = urColums.Count;
-                    for (int i = 1; i <= RowsCount; i++)
+                    int rowsCount = urRows.Count;
+                    int columnsCount = urColums.Count;
+                    result = new string[rowsCount, columnsCount];
+                    for (int i = 1; i <= rowsCount; i++)
                     {
-                        for (int j = 1; j <= ColumnsCount; j++)
+                        for (int j = 1; j <= columnsCount; j++)
                         {
-                            Excel.Range CellRange = UsedRange.Cells[i, j];
+                            Excel.Range cellRange = usedRange.Cells[i, j];
                             // Получение текста ячейки
-                            string CellText = (CellRange == null || CellRange.Value2 == null) ? null :
-                                                (CellRange as Excel.Range).Value2.ToString();
+                            string cellText = (cellRange == null || cellRange.Value2 == null) ? null :
+                                                (cellRange as Excel.Range).Value2.ToString();
 
-                            if (CellText != null)
+                            if (cellText != null)
                             {
-                                result += CellText;
-                            }
-
-                            if (j != ColumnsCount)
-                            {
-                                result += "\t";
-                            }
-                            else if (i != RowsCount)
-                            {
-                                result += "\n";
+                                result[i - 1, j - 1] += cellText;
                             }
                         }
                     }
                     // Очистка неуправляемых ресурсов на каждой итерации
                     if (urRows != null) Marshal.ReleaseComObject(urRows);
                     if (urColums != null) Marshal.ReleaseComObject(urColums);
-                    if (UsedRange != null) Marshal.ReleaseComObject(UsedRange);
+                    if (usedRange != null) Marshal.ReleaseComObject(usedRange);
                     if (worksheet != null) Marshal.ReleaseComObject(worksheet);
                 }
             }
@@ -111,14 +103,16 @@ namespace XLSXtoDOC
                     app = null;
                 }
             }
+
+            return result;
         }
 
         /// <summary>
         /// Сохранение таблицы в word
         /// </summary>
         /// <param name="filename"></param>
-        /// <param name="input"></param>
-        public void SaveDOC(string filename, string input)
+        /// <param name="result"></param>
+        public static void SaveDOC(string filename, string[,] result)
         {
             object SaveChanges = false;
 
@@ -127,23 +121,8 @@ namespace XLSXtoDOC
             Word.Range range = doc.Range();
 
             // Определение количества необходимых строк с столбцов
-            int rowCount = 1;
-            int columnCount = 0;
-            foreach (char s in input)
-            {
-                if (s == '\n')
-                {
-                    rowCount++;
-                }
-                if (s == '\t')
-                {
-                    columnCount++;
-                }
-            }
-            columnCount = (columnCount + rowCount) / rowCount;
-
-            // Создание массива для заполнения таблицы
-            string[] content = input.Replace("\n", "\t").Split('\t');
+            int rowCount = result.GetLength(0);
+            int columnCount = result.GetLength(1);
 
             try
             {
@@ -151,19 +130,11 @@ namespace XLSXtoDOC
                 Word.Table table = doc.Tables.Add(range, rowCount, columnCount);
 
                 // Заполнение таблицы данными
-                int a = 1;
-                int b = 1;
-                for (int i = 0; i < rowCount * columnCount; i++)
+                for (int i = 0; i < rowCount; i++)
                 {
-                    table.Cell(a, b).Range.Text = content[i];
-                    if (b == columnCount)
+                    for (int j = 0; j < columnCount; j++)
                     {
-                        b = 1;
-                        a++;
-                    }
-                    else
-                    {
-                        b++;
+                        table.Cell(i, j).Range.Text = result[i, j];
                     }
                 }
 
@@ -201,7 +172,7 @@ namespace XLSXtoDOC
         /// Вывод окна с сообщением об ошибке
         /// </summary>
         /// <param name="message"></param>
-        public void Error(string message)
+        public static void Error(string message)
         {
             string messageBoxText = message;
             string caption = "Error";
@@ -215,7 +186,7 @@ namespace XLSXtoDOC
         /// Вывод окна с сообщением
         /// </summary>
         /// <param name="message"></param>
-        public void Message(string message)
+        public static void Message(string message)
         {
             string messageBoxText = message;
             string caption = "Message";

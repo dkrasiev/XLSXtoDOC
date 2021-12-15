@@ -22,7 +22,7 @@ namespace XLSXtoDOC
     /// </summary>
     public partial class MainWindow : Window
     {
-        public string result = "";
+        private string[,] _result;
 
         public MainWindow()
         {
@@ -31,30 +31,32 @@ namespace XLSXtoDOC
 
         private void ButtonLoad_Click(object sender, RoutedEventArgs e)
         {
-            Program program = new Program();
-
-            OpenFileDialog dlg = new OpenFileDialog
+            OpenFileDialog openFileDialog = new OpenFileDialog
             {
                 Filter = "Excel документ (*.xlsx)|*.xlsx|Все файлы (*.*)|*.*",
                 CheckFileExists = true
             };
 
-            if (dlg.ShowDialog() == true && dlg.FileName != null)
+            if (openFileDialog.ShowDialog() == true && openFileDialog.FileName != null)
             {
-                program.LoadXLSX(dlg.FileName, ref result);
+                _result = Program.LoadXLSX(openFileDialog.FileName);
 
-                if (result.Length > 0)
+                if (_result.Length > 0)
                 {
-                    textBlockSelectedFile.Text = dlg.FileName;
+                    textBlockSelectedFile.Text = openFileDialog.FileName;
                 }
             }
         }
 
         private void ButtonSave_Click(object sender, RoutedEventArgs e)
         {
-            Program program = new Program();
+            if (_result == null)
+            {
+                Program.Error("Файл не выбран");
+                return;
+            }
 
-            SaveFileDialog dlg = new SaveFileDialog
+            SaveFileDialog saveFileDialog = new SaveFileDialog
             {
                 Filter = "Word document (*.doc)|*.doc",
                 CheckFileExists = false,
@@ -62,13 +64,13 @@ namespace XLSXtoDOC
                 FileName = "result.doc"
             };
 
-            if (result.Length < 1)
+            if (_result.Length < 1)
             {
-                program.Error("Файл не выбран или не содержит символов");
+                Program.Error("Файл не выбран или не содержит символов");
             }
-            else if (dlg.ShowDialog() == true && dlg.FileName != null)
+            else if (saveFileDialog.ShowDialog() == true && saveFileDialog.FileName != null)
             {
-                program.SaveDOC(dlg.FileName, result);
+                Program.SaveDOC(saveFileDialog.FileName, _result);
             }
         }
     }
