@@ -36,7 +36,7 @@ namespace XLSXtoDOC
                 workbooks = app.Workbooks;
                 workbook = workbooks.Open(FileName, MissingObj, rOnly);
 
-                // Получение всех страниц докуента
+                // Получение всех страниц документа
                 sheets = workbook.Sheets;
 
                 foreach (Excel.Worksheet worksheet in sheets)
@@ -111,8 +111,8 @@ namespace XLSXtoDOC
         /// Сохранение таблицы в word
         /// </summary>
         /// <param name="filename"></param>
-        /// <param name="result"></param>
-        public static void SaveDOC(string filename, string[,] result)
+        /// <param name="data"></param>
+        public static void SaveDOC(string filename, string[,] data)
         {
             object SaveChanges = false;
 
@@ -121,8 +121,8 @@ namespace XLSXtoDOC
             Word.Range range = doc.Range();
 
             // Определение количества необходимых строк с столбцов
-            int rowCount = result.GetLength(0);
-            int columnCount = result.GetLength(1);
+            int rowCount = data.GetLength(0);
+            int columnCount = data.GetLength(1);
 
             try
             {
@@ -134,7 +134,7 @@ namespace XLSXtoDOC
                 {
                     for (int j = 0; j < columnCount; j++)
                     {
-                        table.Cell(i, j).Range.Text = result[i, j];
+                        table.Cell(i + 1, j + 1).Range.Text = data[i, j];
                     }
                 }
 
@@ -153,17 +153,16 @@ namespace XLSXtoDOC
                 if (doc != null)
                 {
                     doc.Close(ref SaveChanges);
+                    Marshal.ReleaseComObject(doc);
                 }
                 if (range != null)
                 {
                     Marshal.ReleaseComObject(range);
-                    range = null;
                 }
                 if (app != null)
                 {
                     app.Quit();
                     Marshal.ReleaseComObject(app);
-                    app = null;
                 }
             }
         }
