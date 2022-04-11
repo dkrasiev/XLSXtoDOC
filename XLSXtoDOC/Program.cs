@@ -114,6 +114,7 @@ namespace XLSXtoDOC
         /// <param name="result"></param>
         public static void SaveDOC(string filename, string[,] result)
         {
+            string columnsDef = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             object SaveChanges = false;
 
             Word.Application app = new Word.Application();
@@ -127,14 +128,17 @@ namespace XLSXtoDOC
             try
             {
                 // Создание и добавление таблицы
-                Word.Table table = doc.Tables.Add(range, rowCount, columnCount);
+                Word.Table table = doc.Tables.Add(range, rowCount+1, columnCount+1);
 
                 // Заполнение таблицы данными
                 for (int i = 0; i < rowCount; i++)
                 {
-                    for (int j = 0; j < columnCount; j++)
+                    table.Cell(i, 0).Range.Text = i.ToString();
+;                    for (int j = 0; j < columnCount; j++)
                     {
-                        table.Cell(i, j).Range.Text = result[i, j];
+                        table.Cell(0, j).Range.Text = columnsDef[j].ToString();
+
+                        table.Cell(i+2, j+2).Range.Text = result[i, j];
                     }
                 }
 
